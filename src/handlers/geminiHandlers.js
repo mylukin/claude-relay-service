@@ -30,7 +30,8 @@ const handleGeminiUpstreamError = async (
   accountType,
   sessionHash,
   headers,
-  disableAutoProtection = false
+  disableAutoProtection = false,
+  responseBody = null
 ) => {
   if (!accountId || !errorStatus) {
     return
@@ -39,7 +40,7 @@ const handleGeminiUpstreamError = async (
   try {
     if (errorStatus === 429) {
       if (!autoProtectionDisabled) {
-        const ttl = upstreamErrorHelper.parseRetryAfter(headers)
+        const ttl = upstreamErrorHelper.parseRetryAfter(headers, responseBody)
         await upstreamErrorHelper.markTempUnavailable(accountId, accountType || 'gemini', 429, ttl)
         // 同时设置 rate-limit 状态，保持与 /messages handler 一致
         await unifiedGeminiScheduler
@@ -793,7 +794,8 @@ async function handleMessages(req, res) {
       accountType,
       sessionHash,
       error.response?.headers,
-      account?.disableAutoProtection
+      account?.disableAutoProtection,
+      error.response?.data
     )
 
     // 返回错误响应
@@ -1788,7 +1790,8 @@ async function handleGenerateContent(req, res) {
       accountType,
       sessionHash,
       error.response?.headers,
-      account?.disableAutoProtection
+      account?.disableAutoProtection,
+      error.response?.data
     )
     res.status(500).json({
       error: {
@@ -2183,7 +2186,8 @@ async function handleStreamGenerateContent(req, res) {
       accountType,
       sessionHash,
       error.response?.headers,
-      account?.disableAutoProtection
+      account?.disableAutoProtection,
+      error.response?.data
     )
 
     if (!res.headersSent) {
@@ -2488,7 +2492,8 @@ async function handleStandardGenerateContent(req, res) {
       accountType,
       sessionHash,
       error.response?.headers,
-      account?.disableAutoProtection
+      account?.disableAutoProtection,
+      error.response?.data
     )
 
     res.status(500).json({
@@ -2979,7 +2984,8 @@ async function handleStandardStreamGenerateContent(req, res) {
       accountType,
       sessionHash,
       error.response?.headers,
-      account?.disableAutoProtection
+      account?.disableAutoProtection,
+      error.response?.data
     )
 
     if (!res.headersSent) {
