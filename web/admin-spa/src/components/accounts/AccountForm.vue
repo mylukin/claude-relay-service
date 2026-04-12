@@ -1365,6 +1365,22 @@
 
               <div>
                 <label class="mb-3 block text-sm font-semibold text-gray-700 dark:text-gray-300"
+                  >额外请求体参数 (可选)</label
+                >
+                <textarea
+                  v-model="form.extraRequestBody"
+                  class="form-input w-full border-gray-300 font-mono text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200"
+                  placeholder='{"enable_search": false}'
+                  rows="3"
+                />
+                <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                  JSON 格式，合并到每个请求体中。用于 provider 特定参数，如 Qwen 的
+                  <code>enable_search</code>
+                </p>
+              </div>
+
+              <div>
+                <label class="mb-3 block text-sm font-semibold text-gray-700 dark:text-gray-300"
                   >模型限制 (可选)</label
                 >
 
@@ -3135,6 +3151,23 @@
               </p>
             </div>
 
+            <!-- 额外请求体参数（编辑模式）-->
+            <div>
+              <label class="mb-3 block text-sm font-semibold text-gray-700 dark:text-gray-300">
+                额外请求体参数 (可选)
+              </label>
+              <textarea
+                v-model="form.extraRequestBody"
+                class="form-input w-full border-gray-300 font-mono text-sm dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200"
+                placeholder='{"enable_search": false}'
+                rows="3"
+              />
+              <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                JSON 格式，合并到每个请求体中。用于 provider 特定参数，如 Qwen 的
+                <code>enable_search</code>
+              </p>
+            </div>
+
             <div>
               <label class="mb-3 block text-sm font-semibold text-gray-700 dark:text-gray-300"
                 >模型限制 (可选)</label
@@ -4376,6 +4409,13 @@ const form = ref({
   quotaResetTime: props.account?.quotaResetTime || '00:00',
   // 并发控制字段
   maxConcurrentTasks: props.account?.maxConcurrentTasks || 0,
+  // 额外请求体参数（JSON字符串）
+  extraRequestBody: (() => {
+    const extra = props.account?.extraRequestBody
+    if (!extra) return ''
+    if (typeof extra === 'object') return JSON.stringify(extra, null, 2)
+    return extra
+  })(),
   // Bedrock 特定字段
   credentialType: props.account?.credentialType || 'access_key', // 'access_key' 或 'bearer_token'
   accessKeyId: props.account?.accessKeyId || '',
@@ -5517,6 +5557,15 @@ const createAccount = async () => {
       data.quotaResetTime = form.value.quotaResetTime || '00:00'
       // 并发控制字段
       data.maxConcurrentTasks = form.value.maxConcurrentTasks || 0
+      // 额外请求体参数
+      if (form.value.extraRequestBody?.trim()) {
+        try {
+          data.extraRequestBody = JSON.parse(form.value.extraRequestBody)
+        } catch {
+          showToast('额外请求体参数格式错误，请输入有效的 JSON', 'error')
+          return
+        }
+      }
     } else if (form.value.platform === 'openai-responses') {
       // OpenAI-Responses 账户特定数据
       data.baseApi = form.value.baseApi
@@ -5865,6 +5914,17 @@ const updateAccount = async () => {
       data.quotaResetTime = form.value.quotaResetTime || '00:00'
       // 并发控制字段
       data.maxConcurrentTasks = form.value.maxConcurrentTasks || 0
+      // 额外请求体参数
+      if (form.value.extraRequestBody?.trim()) {
+        try {
+          data.extraRequestBody = JSON.parse(form.value.extraRequestBody)
+        } catch {
+          showToast('额外请求体参数格式错误，请输入有效的 JSON', 'error')
+          return
+        }
+      } else {
+        data.extraRequestBody = null
+      }
     }
 
     // OpenAI-Responses 特定更新
