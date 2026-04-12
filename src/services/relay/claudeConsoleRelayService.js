@@ -78,12 +78,20 @@ class ClaudeConsoleRelayService {
    * 例如 Qwen 的 enable_search: false
    */
   _mergeExtraRequestBody(requestBody, account) {
+    // 📊 记录工具列表（用于排查 provider 兼容性问题）
+    if (Array.isArray(requestBody.tools) && requestBody.tools.length > 0) {
+      const toolNames = requestBody.tools.map((t) => t.name || t.type || 'unknown')
+      logger.info(
+        `🔧 [Console] Request tools for ${account.name}: [${toolNames.join(', ')}] (${toolNames.length} tools)`
+      )
+    }
+
     if (
       account.extraRequestBody &&
       typeof account.extraRequestBody === 'object' &&
       Object.keys(account.extraRequestBody).length > 0
     ) {
-      logger.debug(
+      logger.info(
         `🔧 Merging extraRequestBody for account ${account.name}: ${JSON.stringify(account.extraRequestBody)}`
       )
       return { ...requestBody, ...account.extraRequestBody }
