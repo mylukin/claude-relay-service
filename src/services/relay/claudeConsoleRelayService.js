@@ -86,6 +86,39 @@ class ClaudeConsoleRelayService {
       )
     }
 
+    // 🔧 工具兼容性修复：部分 provider（如 Qwen DashScope）会将 web_fetch 映射为
+    // 内置的 web_extractor，而 web_extractor 要求 web_search 同时存在。
+    // 当请求包含 web_fetch 但没有 web_search 时，自动注入 web_search 工具。
+    if (Array.isArray(requestBody.tools)) {
+      const hasWebFetch = requestBody.tools.some((t) => t.name === 'web_fetch')
+      const hasWebSearch = requestBody.tools.some((t) => t.name === 'web_search')
+      if (hasWebFetch && !hasWebSearch) {
+        logger.info(
+          `🔧 [Console] Auto-injecting web_search tool for ${account.name} (web_fetch requires web_search on some providers)`
+        )
+        requestBody = {
+          ...requestBody,
+          tools: [
+            ...requestBody.tools,
+            {
+              name: 'web_search',
+              description: 'Search the web for information',
+              input_schema: {
+                type: 'object',
+                properties: {
+                  query: {
+                    type: 'string',
+                    description: 'The search query'
+                  }
+                },
+                required: ['query']
+              }
+            }
+          ]
+        }
+      }
+    }
+
     if (
       account.extraRequestBody &&
       typeof account.extraRequestBody === 'object' &&
