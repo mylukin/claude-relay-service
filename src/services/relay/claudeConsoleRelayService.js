@@ -19,6 +19,78 @@ class ClaudeConsoleRelayService {
     this.defaultUserAgent = 'claude-cli/2.0.52 (external, cli)'
   }
 
+  /**
+   * 🔄 转换 messages 数组中的 system role 消息
+   * 部分 Console API 后端（如 GLM、Qwen）不支持 role="system"，
+   * 需要将 system 内容合并到第一条 user 消息
+   */
+  _transformSystemMessages(requestBody) {
+    if (!requestBody || !Array.isArray(requestBody.messages)) {
+      return requestBody
+    }
+
+    const systemContents = []
+    const nonSystemMessages = []
+
+    for (const msg of requestBody.messages) {
+      if (msg && msg.role === 'system') {
+        systemContents.push(msg.content)
+      } else {
+        nonSystemMessages.push(msg)
+      }
+    }
+
+    if (systemContents.length === 0) {
+      return requestBody
+    }
+
+    const systemText = systemContents.join('\n\n')
+    let transformedMessages = nonSystemMessages
+    const firstUserIndex = nonSystemMessages.findIndex((m) => m && m.role === 'user')
+
+    if (firstUserIndex !== -1) {
+      const firstUserMsg = nonSystemMessages[firstUserIndex]
+      const mergedContent = `${systemText}\n\n${firstUserMsg.content}`
+      transformedMessages = [...nonSystemMessages]
+      transformedMessages[firstUserIndex] = {
+        ...firstUserMsg,
+        content: mergedContent
+      }
+    } else {
+      logger.warn(
+        '⚠️ Console API: No user message found to merge system prompt, creating new user message'
+      )
+      transformedMessages = [{ role: 'user', content: systemText }, ...nonSystemMessages]
+    }
+
+    logger.debug(
+      `🔄 Console API: Transformed ${systemContents.length} system message(s) into user message context`
+    )
+
+    return {
+      ...requestBody,
+      messages: transformedMessages
+    }
+  }
+
+  /**
+   * 🔧 合并账户级别的额外请求体参数（provider 特定参数）
+   * 例如 Qwen 的 enable_search: false
+   */
+  _mergeExtraRequestBody(requestBody, account) {
+    if (
+      account.extraRequestBody &&
+      typeof account.extraRequestBody === 'object' &&
+      Object.keys(account.extraRequestBody).length > 0
+    ) {
+      logger.debug(
+        `🔧 Merging extraRequestBody for account ${account.name}: ${JSON.stringify(account.extraRequestBody)}`
+      )
+      return { ...requestBody, ...account.extraRequestBody }
+    }
+    return requestBody
+  }
+
   // 🚀 转发请求到Claude Console API
   async relayRequest(
     requestBody,
@@ -158,10 +230,16 @@ class ClaudeConsoleRelayService {
       }
 
       // 创建修改后的请求体
-      const modifiedRequestBody = {
+      let modifiedRequestBody = {
         ...requestBody,
         model: mappedModel
       }
+
+      // 🔄 转换 system messages（部分后端不支持 role="system"）
+      modifiedRequestBody = this._transformSystemMessages(modifiedRequestBody)
+
+      // 🔧 合并账户级别的额外请求体参数（如 Qwen 的 enable_search: false）
+      modifiedRequestBody = this._mergeExtraRequestBody(modifiedRequestBody, account)
 
       // 模型兼容性检查已经在调度器中完成，这里不需要再检查
 
@@ -644,10 +722,16 @@ class ClaudeConsoleRelayService {
       }
 
       // 创建修改后的请求体
-      const modifiedRequestBody = {
+      let modifiedRequestBody = {
         ...requestBody,
         model: mappedModel
       }
+
+      // 🔄 转换 system messages（部分后端不支持 role="system"）
+      modifiedRequestBody = this._transformSystemMessages(modifiedRequestBody)
+
+      // 🔧 合并账户级别的额外请求体参数（如 Qwen 的 enable_search: false）
+      modifiedRequestBody = this._mergeExtraRequestBody(modifiedRequestBody, account)
 
       // 模型兼容性检查已经在调度器中完成，这里不需要再检查
 
@@ -757,7 +841,9 @@ class ClaudeConsoleRelayService {
       let aborted = false
       let settled = false
       const settleOnce = (fn) => {
-        if (settled) return
+        if (settled) {
+          return
+        }
         settled = true
         fn()
       }

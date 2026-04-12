@@ -70,7 +70,8 @@ class ClaudeConsoleAccountService {
       quotaResetTime = '00:00', // 额度重置时间（HH:mm格式）
       maxConcurrentTasks = 0, // 最大并发任务数，0表示无限制
       disableAutoProtection = false, // 是否关闭自动防护（429/401/400/529 不自动禁用）
-      interceptWarmup = false // 拦截预热请求（标题生成、Warmup等）
+      interceptWarmup = false, // 拦截预热请求（标题生成、Warmup等）
+      extraRequestBody = null // 额外请求体参数（JSON对象，合并到每个请求中，用于provider特定参数如 enable_search）
     } = options
 
     // 验证必填字段
@@ -120,7 +121,8 @@ class ClaudeConsoleAccountService {
       quotaStoppedAt: '', // 因额度停用的时间
       maxConcurrentTasks: maxConcurrentTasks.toString(), // 最大并发任务数，0表示无限制
       disableAutoProtection: disableAutoProtection.toString(), // 关闭自动防护
-      interceptWarmup: interceptWarmup.toString() // 拦截预热请求
+      interceptWarmup: interceptWarmup.toString(), // 拦截预热请求
+      extraRequestBody: extraRequestBody ? JSON.stringify(extraRequestBody) : '' // 额外请求体参数
     }
 
     const client = redis.getClientSafe()
@@ -283,6 +285,15 @@ class ClaudeConsoleAccountService {
       accountData.proxy = JSON.parse(accountData.proxy)
     }
 
+    // 解析额外请求体参数
+    if (accountData.extraRequestBody) {
+      try {
+        accountData.extraRequestBody = JSON.parse(accountData.extraRequestBody)
+      } catch {
+        accountData.extraRequestBody = null
+      }
+    }
+
     // 解析并发控制字段
     accountData.maxConcurrentTasks = parseInt(accountData.maxConcurrentTasks) || 0
     // 获取实时并发计数
@@ -391,6 +402,13 @@ class ClaudeConsoleAccountService {
       }
       if (updates.interceptWarmup !== undefined) {
         updatedData.interceptWarmup = updates.interceptWarmup.toString()
+      }
+
+      // 额外请求体参数
+      if (updates.extraRequestBody !== undefined) {
+        updatedData.extraRequestBody = updates.extraRequestBody
+          ? JSON.stringify(updates.extraRequestBody)
+          : ''
       }
 
       // ✅ 直接保存 subscriptionExpiresAt（如果提供）
