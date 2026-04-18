@@ -574,7 +574,11 @@ class ClaudeRelayService {
       const accessToken = await claudeAccountService.getValidAccessToken(accountId)
 
       const isRealClaudeCodeRequest = this._isActualClaudeCodeRequest(requestBody, clientHeaders)
-      const processedBody = this._processRequestBody(requestBody, account, isRealClaudeCodeRequest)
+      const processedBody = await this._processRequestBody(
+        requestBody,
+        account,
+        isRealClaudeCodeRequest
+      )
       // 🧹 内存优化：存储到 bodyStore，避免闭包捕获
       const originalBodyString = JSON.stringify(processedBody)
       bodyStoreIdNonStream = ++this._bodyStoreIdCounter
@@ -1077,7 +1081,7 @@ class ClaudeRelayService {
   }
 
   // 🔄 处理请求体
-  _processRequestBody(body, account = null, isRealClaudeCodeOverride = undefined) {
+  async _processRequestBody(body, account = null, isRealClaudeCodeOverride = undefined) {
     if (!body) {
       return body
     }
@@ -2100,7 +2104,11 @@ class ClaudeRelayService {
       const accessToken = await claudeAccountService.getValidAccessToken(accountId)
 
       const isRealClaudeCodeRequest = this._isActualClaudeCodeRequest(requestBody, clientHeaders)
-      const processedBody = this._processRequestBody(requestBody, account, isRealClaudeCodeRequest)
+      const processedBody = await this._processRequestBody(
+        requestBody,
+        account,
+        isRealClaudeCodeRequest
+      )
       // 🧹 内存优化：存储到 bodyStore，不放入 requestOptions 避免闭包捕获
       const originalBodyString = JSON.stringify(processedBody)
       const bodyStoreId = ++this._bodyStoreIdCounter
