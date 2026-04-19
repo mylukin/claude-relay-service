@@ -1711,23 +1711,38 @@ const requireAdmin = (req, res, next) => {
 // 注意：使用统计现在直接在/api/v1/messages路由中处理，
 // 以便从Claude API响应中提取真实的usage数据
 
-// 🚦 CORS中间件（优化版，支持Chrome插件）
+// 🚦 CORS中间件（优化版，支持Chrome插件和LAN访问）
 const corsMiddleware = (req, res, next) => {
   const { origin } = req.headers
 
-  // 允许的源（可以从配置文件读取）
-  const allowedOrigins = [
-    'http://localhost:3000',
-    'https://localhost:3000',
-    'http://127.0.0.1:3000',
-    'https://127.0.0.1:3000'
-  ]
-
-  // 🆕 检查是否为Chrome插件请求
-  const isChromeExtension = origin && origin.startsWith('chrome-extension://')
+  // 判断是否为允许的源
+  const isAllowed = (() => {
+    if (!origin) {
+      return true
+    }
+    // Chrome 插件
+    if (origin.startsWith('chrome-extension://')) {
+      return true
+    }
+    try {
+      const { port } = new URL(origin)
+      const serverPort = String(config.server.port || 3000)
+      // 同端口：localhost / 127.0.0.1 / LAN IP 均放行
+      if (port === serverPort || (!port && serverPort === '80')) {
+        return true
+      }
+      // 显式列出的开发端口
+      if (['3000', '3001'].includes(port)) {
+        return true
+      }
+    } catch (_e) {
+      // 无效 origin 不放行
+    }
+    return false
+  })()
 
   // 设置CORS头
-  if (allowedOrigins.includes(origin) || !origin || isChromeExtension) {
+  if (isAllowed) {
     res.header('Access-Control-Allow-Origin', origin || '*')
   }
 
