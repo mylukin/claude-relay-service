@@ -18,6 +18,8 @@ const ALLOWED_MODELS = {
     'gpt-4o-mini',
     'gpt-5',
     'gpt-5-mini',
+    'gpt-5.5',
+    'gpt-5.5-pro',
     'gpt-35-turbo',
     'gpt-35-turbo-16k',
     'codex-mini'
