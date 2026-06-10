@@ -12,6 +12,7 @@ const UPSTREAM_TO_ALIAS = {
   'claude-opus-4-6-thinking': 'gemini-claude-opus-4-6-thinking',
   'claude-opus-4-7-thinking': 'gemini-claude-opus-4-7-thinking',
   'claude-opus-4-8-thinking': 'gemini-claude-opus-4-8-thinking',
+  'claude-fable-5-thinking': 'gemini-claude-fable-5-thinking',
   chat_20706: '',
   chat_23310: '',
   'gemini-2.5-flash-thinking': '',
@@ -31,7 +32,8 @@ const ALIAS_TO_UPSTREAM = {
   'gemini-claude-opus-4-5-thinking': 'claude-opus-4-5-thinking',
   'gemini-claude-opus-4-6-thinking': 'claude-opus-4-6-thinking',
   'gemini-claude-opus-4-7-thinking': 'claude-opus-4-7-thinking',
-  'gemini-claude-opus-4-8-thinking': 'claude-opus-4-8-thinking'
+  'gemini-claude-opus-4-8-thinking': 'claude-opus-4-8-thinking',
+  'gemini-claude-fable-5-thinking': 'claude-fable-5-thinking'
 }
 
 const ANTIGRAVITY_MODEL_METADATA = {
@@ -105,6 +107,10 @@ const ANTIGRAVITY_MODEL_METADATA = {
   'gemini-claude-opus-4-8-thinking': {
     thinking: { min: 1024, max: 200000, zeroAllowed: false, dynamicAllowed: true },
     maxCompletionTokens: 64000
+  },
+  'gemini-claude-fable-5-thinking': {
+    thinking: { min: 1024, max: 200000, zeroAllowed: false, dynamicAllowed: true },
+    maxCompletionTokens: 64000
   }
 }
 
@@ -157,6 +163,7 @@ function mapAntigravityUpstreamModel(model) {
     'claude-opus-4-6': 'claude-opus-4-6-thinking',
     'claude-opus-4-7': 'claude-opus-4-7-thinking',
     'claude-opus-4-8': 'claude-opus-4-8-thinking',
+    'claude-fable-5': 'claude-fable-5-thinking',
     // Gemini thinking 变体回退
     'gemini-2.5-flash-thinking': 'gemini-2.5-flash'
   }
