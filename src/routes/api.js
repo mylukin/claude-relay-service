@@ -1952,7 +1952,6 @@ router.all('/api/organizations/:orgId/policy_limits*', authenticateApiKey, async
     const identityRewriteConfig = config.identityRewrite
 
     if (identityRewriteConfig?.enabled && req.body && typeof req.body === 'object') {
-      const claudeAccountService = require('../services/account/claudeAccountService')
       const accountId = req.apiKey?.claudeAccountId || null
       const [profile, accountEmail] = await Promise.all([
         identityRewriteService.getProfile(accountId),
@@ -1975,7 +1974,6 @@ router.all('/api/settings*', authenticateApiKey, async (req, res) => {
     const identityRewriteConfig = config.identityRewrite
 
     if (identityRewriteConfig?.enabled && req.body && typeof req.body === 'object') {
-      const claudeAccountService = require('../services/account/claudeAccountService')
       const accountId = req.apiKey?.claudeAccountId || null
       const [profile, accountEmail] = await Promise.all([
         identityRewriteService.getProfile(accountId),
