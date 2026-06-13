@@ -1163,6 +1163,10 @@ const exchangeCode = async () => {
       stopCountdown()
     }
 
+    if (!tokenInfo) {
+      throw new Error('授权失败：服务器未返回令牌信息')
+    }
+
     emit('success', tokenInfo)
   } catch (error) {
     showToast(error.message || '授权失败，请检查授权码是否正确', 'error')

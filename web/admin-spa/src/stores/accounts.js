@@ -18,6 +18,8 @@ const PLATFORM_CONFIG = {
   droid: { endpoint: 'droid-accounts', stateKey: 'droidAccounts' }
 }
 
+const getResponseErrorMessage = (res, fallback) => res?.message || res?.error || fallback
+
 export const useAccountsStore = defineStore('accounts', () => {
   const claudeAccounts = ref([])
   const claudeConsoleAccounts = ref([])
@@ -193,8 +195,11 @@ export const useAccountsStore = defineStore('accounts', () => {
 
   const exchangeClaudeCode = async (data) => {
     const res = await httpApis.exchangeClaudeCodeApi(data)
-    if (!res.success) error.value = res.message
-    return res.success ? res.data : null
+    if (!res.success) {
+      error.value = getResponseErrorMessage(res, 'Claude 授权失败')
+      throw new Error(error.value)
+    }
+    return res.data
   }
 
   const generateClaudeSetupTokenUrl = async (proxyConfig) => {
@@ -205,8 +210,11 @@ export const useAccountsStore = defineStore('accounts', () => {
 
   const exchangeClaudeSetupTokenCode = async (data) => {
     const res = await httpApis.exchangeClaudeSetupTokenApi(data)
-    if (!res.success) error.value = res.message
-    return res.success ? res.data : null
+    if (!res.success) {
+      error.value = getResponseErrorMessage(res, 'Claude Setup Token 授权失败')
+      throw new Error(error.value)
+    }
+    return res.data
   }
 
   const oauthWithCookie = async (payload) => {
